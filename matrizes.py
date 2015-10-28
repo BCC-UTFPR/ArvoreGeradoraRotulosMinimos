@@ -26,7 +26,19 @@ def inicializa(entrada):
     for n, vizinhos in grafos[0].adjacency_iter():
         for vizinho, attr in vizinhos.items():
             peso = attr['weight']
-            print('{}-{}: {}'.format(n, vizinho, peso))
+            print('{}-{}: {}'.format(n, vizinho, peso)) 
+
+def solucao():
+	print 'Solucao'
+
+
+def busca_local():
+	print 'busca local'
+
+
+def update_feronomio():
+	print 'update feronomio'
+
 
 if __name__ == '__main__':
     from sys import argv
