@@ -78,18 +78,19 @@ class MLST:
 		print 'Quantidade de rótulos usados: ' + str(len(S))
 		print '\n'
 		
-		
 		node_list = []
 		node_list.extend([i for i in range(1,size)])
 		adjacency_list = []
 		adjacency_list.extend([[] for i in range(size - 1)])
 		line = 0
 		column = 0
+		label_used = []
 		
 		while(self.exists_not_connected(node_list)):
 			maximum_index, maximum_value = max(enumerate(frequency), key=operator.itemgetter(1))
 			frequency[maximum_index] = 0
 			current_label = S[maximum_index]
+			label_used.append(current_label)
 			for label_line in graph:
 				for label_column in label_line:
 					label_column = int(label_column)
@@ -107,7 +108,70 @@ class MLST:
 		print 'Foi gerado um novo subgrafo (T) com sucesso.'
 		for i,each in enumerate(adjacency_list):
 			print str(i + 1) + ' -> ' + str(each)
+		label_used.sort()
+		print 'Rótulos utilizados em (T): ' + str(label_used)
+		return label_used
+		
+	def mutation(self,S,graph,size):
+		label_not_used = []
+		label_not_used.extend([i for i in range(1,size)])
+		T = []
+		
+		flag = 0
+		while flag == 0:
+			current_label = random.choice(label_not_used)
+			if not current_label in S:
+				print 'Adicionado o rótulo ' + str(current_label) + ' em S.'
+				S.append(current_label)
+				S.sort()
+				flag = 1
+		
+		frequency = []
+		frequency.extend([0 for i in range(0,len(S))])
+		for position,each_label in enumerate(S):
+			for label_line in graph:
+				for label_column in label_line:
+					label_column = int(label_column)
+					if label_column == each_label:						
+						frequency[position] = frequency[position] + 1
+		
+		node_list = []
+		node_list.extend([i for i in range(1,size)])
+		T = S
+		adjacency_list = []
+		adjacency_list.extend([[] for i in range(size - 1)])
+		line = 0
+		column = 0
+		
+		while(self.exists_not_connected(node_list)):
+			frequency_index = frequency.index(min(frequency))
+			node_removed = S[frequency_index]
+			T.remove(node_removed)
+			
+			for label in T:
+				for label_line in graph:
+					for label_column in label_line:
+						label_column = int(label_column)
+						if label_column == label:
+							adjacency_list[line].append(column + 1)
+						column = column + 1
+					column = 0
+					line = line + 1
+				line = 0
+				column = 0
+				
+			for each_list in adjacency_list:
+				for each_value in each_list:
+					if each_value in node_list: node_list.remove(each_value)	
+			
+			if not self.exists_not_connected(node_list):
+				T.append(node_removed)
+				break
+		
+		for each in adjacency_list:
+			print each
 
+		
 	
 reader = Reader()
 mlst = MLST()
@@ -117,5 +181,6 @@ graph = graph_list[0]
 
 chromosome_a = mlst.generate_chromosome(graph,size)
 chromosome_b = mlst.generate_chromosome(graph,size)
-S = list(set(chromosome_a) | set(chromosome_b))
-mlst.crossover(S,graph,size)
+label_used = list(set(chromosome_a) | set(chromosome_b))
+S = mlst.crossover(label_used,graph,size)
+S = mlst.mutation(S,graph,size)
