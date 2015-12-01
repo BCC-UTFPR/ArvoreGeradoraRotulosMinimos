@@ -1,5 +1,6 @@
 # coding=UTF-8
 import random
+import operator
 
 class Reader:
 	def read_graph_file(self,file_name):
@@ -15,77 +16,106 @@ class Reader:
 					graph = []
 		return graph_list,graph_size					
 			
-class MVCA:
-	def generate_subgraph(self,list_node,list_edges,list_label):
-		C = [] # Set of used labels
-		H = list_label # Subgraph of G
-		line = 1
-		column = 1
-		
-		while self.is_connected(H):
-			for label_line in list_label:
-				for label in label_line:
-					label = int(label)
-					if self.is_label_new(label,C):
-						print 'O valor não está na lista de usados'
-					
-	def is_connected(self,H):
-		return True
-					
-	def generate_new_graph(self,lenght):
-		column = lenght - 1
-		line = lenght - 1
-		new_list = []
-		index = 0
-		for line in range(0, line): 
-			new_list.append([])
-			for j in range(0, column):
-				new_list[index].append(lenght + 1) # Default value: there isn't a edge
-			column = column - 1
-			index = index + 1
-		return new_list
-		
-	def is_label_new(self,label,list_used):
-		if len(list_used) < 1:
+class MLST:
+	def exists_not_connected(self,label_list):
+		if len(label_list) > 0:
 			return True
 		else:
-			for label_used in list_used:
-				if label == label_used:
-					return False
-		return True
-
-class GeneticAlgorithm:
-	def crossover(self,subgraph_a,subgraph_b):
-		S = list(set(subgraph_a) | set(subgraph_b))
-		print S
+			return False
+			
+	def generate_chromosome(self,graph,size):
+		line = 0
+		column = 0
+		adjacency_list = []
+		adjacency_list.extend([[] for i in range(size - 1)])
+		node_list = []
+		node_list.extend([i for i in range(1,size)])
+		label_list = []
+		label_list.extend([i for i in range(1,size)])
+		label_list_used = []
 		
-	def union(self,subgraph_x,subgraph_y,lenght):
-		line_count = 0
-		column_count = 0
-		for line in subgraph_x:
-			for column_value in line:
-				print column_value
-				print lenght
-				if column_value == lenght:
-					auxiliar_y = subgraph_y[line_count]
-					auxiliar_x = subgraph_x[line_count]
-					auxiliar_x[column_count - 1] = 10
-				column_count = column_count + 1
-			line_count = line_count + 1
-		return subgraph_x
-					
+		
+		while(self.exists_not_connected(node_list)):
+			current_label = random.choice(label_list)
+			label_list.remove(current_label)
+			label_list_used.append(current_label)
+			for label_line in graph:
+				for label_column in label_line:
+					label_column = int(label_column)
+					if label_column == current_label:
+						adjacency_list[line].append(column + 1)
+					column = column + 1
+				column = 0
+				line = line + 1
+			line = 0
+			column = 0
+			for each_list in adjacency_list:
+				for each_value in each_list:
+					if each_value in node_list: node_list.remove(each_value)
+		
+		print 'Indivíduo gerado com sucesso! (Subgrafo)'
+		print 'Lista de adjacência: '
+		for i,each in enumerate(adjacency_list):
+			each.sort()
+			print str(i + 1) + ' -> ' + str(each)
+		print '\n'	
+		return label_list_used
 
-genetic = GeneticAlgorithm()
-a = [[1,2,3],[4,4,4]]
-b = [[1,2,3],[1,2,3]]
-sub = genetic.union(a,b,4)
-print sub
-"""
+	def crossover(self,S,graph,graph_size):
+
+		frequency = []
+		frequency.extend([0 for i in range(0,len(S))])
+		
+		for position,each_label in enumerate(S):
+			for label_line in graph:
+				for label_column in label_line:
+					label_column = int(label_column)
+					if label_column == each_label:						
+						frequency[position] = frequency[position] + 1
+						
+		print 'População (S): ' + str(S)
+		print 'Frequência/Rótulo: ' + str(frequency)
+		print 'Quantidade de rótulos usados: ' + str(len(S))
+		print '\n'
+		
+		
+		node_list = []
+		node_list.extend([i for i in range(1,size)])
+		adjacency_list = []
+		adjacency_list.extend([[] for i in range(size - 1)])
+		line = 0
+		column = 0
+		
+		while(self.exists_not_connected(node_list)):
+			maximum_index, maximum_value = max(enumerate(frequency), key=operator.itemgetter(1))
+			frequency[maximum_index] = 0
+			current_label = S[maximum_index]
+			for label_line in graph:
+				for label_column in label_line:
+					label_column = int(label_column)
+					if label_column == current_label:
+						adjacency_list[line].append(column + 1)
+					column = column + 1
+				column = 0
+				line = line + 1
+			line = 0
+			column = 0
+			for each_list in adjacency_list:
+				for each_value in each_list:
+					if each_value in node_list: node_list.remove(each_value)
+		
+		print 'Foi gerado um novo subgrafo (T) com sucesso.'
+		for i,each in enumerate(adjacency_list):
+			print str(i + 1) + ' -> ' + str(each)
+
+	
 reader = Reader()
-mvca = MVCA()
+mlst = MLST()
 graph_list,graph_size = reader.read_graph_file('HDGraph20_20.txt')
-list_node = range(0,int(graph_size[0])) 
-list_label = graph_list[0] 
-list_edge = []
-mvca.generate_subgraph(list_node,list_edge,list_label)
-"""
+size = int(graph_size[0]) # Size = 20
+graph = graph_list[0] 
+
+chromosome_a = mlst.generate_chromosome(graph,size)
+chromosome_b = mlst.generate_chromosome(graph,size)
+S = list(set(chromosome_a) | set(chromosome_b))
+mlst.crossover(S,graph,size)
