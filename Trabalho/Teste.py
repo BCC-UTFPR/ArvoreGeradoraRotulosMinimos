@@ -1,6 +1,28 @@
 #!/usr/bin/env python 
 # -*- coding: utf-8 -*- 
-from collections import defaultdict, deque
+from collections import defaultdict,deque
+from colorama import Fore, Back, Style
+
+def read_file(file_name):
+	print Fore.WHITE + 'Fazendo a leitura do arquivo...'
+	graph_file = open(file_name,'r')
+	graph_line = graph_file.readlines()
+	print Fore.GREEN + 'PRONTO!'
+	return graph_line
+
+def define_nodes(graph_line):
+	print Fore.WHITE + 'Carregando os nós do arquivo...'
+	list_nodes = []
+	for line in graph_line:
+		line = line.split()
+		if len(line) > 1:
+			if line[0] not in list_nodes:
+				list_nodes.append(line[0])
+			if line[1] not in list_nodes:
+				list_nodes.append(line[1])
+	list_nodes.sort()
+	print Fore.GREEN + 'PRONTO!'
+	return list_nodes
 
 class Graph:
   def __init__(self):
@@ -16,59 +38,6 @@ class Graph:
     self.edges[to_node].append(from_node)
     self.distances[(from_node, to_node)] = distance
 
-def dijsktra(graph, initial):
-  visited = {initial: 0}
-  path = {}
-
-  nodes = set(graph.nodes)
-
-  while nodes: 
-    min_node = None
-    for node in nodes:
-      if node in visited:
-        if min_node is None:
-          min_node = node
-        elif visited[node] < visited[min_node]:
-          min_node = node
-
-    if min_node is None:
-      break
-
-    nodes.remove(min_node)
-    current_weight = visited[min_node]
-
-    for edge in graph.edges[min_node]:
-		try:
-			weight = current_weight + graph.distances[(min_node,edge)]
-			if edge not in visited or weight < visited[edge]:
-				visited[edge] = weight
-				path[edge] = min_node
-		except KeyError,e:
-			continue
-
-  return visited,path
-
-def read_file(file_name):
-	print 'Fazendo a leitura do arquivo...'
-	graph_file = open(file_name,'r')
-	graph_line = graph_file.readlines()[4:] # Ignora as quatro primeiras linhas
-	print 'PRONTO!'
-	return graph_line
-
-def define_nodes(graph_line):
-	print 'Carregando os nós do arquivo...'
-	list_nodes = []
-	for line in graph_line:
-		line = line.split()
-		if len(line) > 1:
-			if line[0] not in list_nodes:
-				list_nodes.append(line[0])
-			if line[1] not in list_nodes:
-				list_nodes.append(line[1])
-	list_nodes.sort()
-	print 'PRONTO!'
-	return list_nodes
-
 def shortest_path(graph, origin, destination):
 	visited, paths = dijsktra(graph, origin)
 	full_path = deque()
@@ -77,12 +46,46 @@ def shortest_path(graph, origin, destination):
 	while _destination != origin:
 		full_path.appendleft(_destination)
 		_destination = paths[_destination]
+		
 	full_path.appendleft(origin)
 	full_path.append(destination)
 	return visited[destination], list(full_path)
+	
+def dijsktra(graph, initial):
+	visitados = {initial: 0}
+	caminho = {}
+	vertices = set(graph.nodes)
+
+	while vertices: 
+		vertice_minimo = None
+		
+		for vertice in vertices:
+			if vertice in visitados:
+				if vertice_minimo is None:
+					vertice_minimo = vertice
+				elif visitados[vertice] < visitados[vertice_minimo]:
+					vertice_minimo = vertice
+
+		if vertice_minimo is None:
+			break
+
+		vertices.remove(vertice_minimo)
+		peso_vertice_minimo = visitados[vertice_minimo]
+
+		for vertice_conectado in graph.edges[vertice_minimo]:
+			try:
+				peso = peso_vertice_minimo + graph.distances[(vertice_minimo,vertice_conectado)]
+				if vertice_conectado not in visitados or peso < visitados[vertice_conectado]:
+					visitados[vertice_conectado] = peso
+					caminho[vertice_conectado] = vertice_minimo
+			except KeyError,e:
+				continue
+				
+	return visitados,caminho
      
 if __name__ == '__main__':
-	graph_line = read_file('xaa')
+
+	graph_line = read_file('rotas-cem-mil.txt')
 	list_nodes = define_nodes(graph_line)
 	graph = Graph()
 	
@@ -96,5 +99,8 @@ if __name__ == '__main__':
 			node_to = int(line[1])
 			graph.add_edge(node_from,node_to,abs(round(node_to - node_from)))
 
-	print 'Caminho mínimo: '
-	print(shortest_path(graph,362,9456))
+	while(True):
+		print Fore.WHITE + 'Caminho mínimo: '
+		x = raw_input('Digite um valor para x:')
+		y = raw_input('Digite um valor para y:')
+		print(Fore.GREEN + str(shortest_path(graph,int(x),int(y))))
